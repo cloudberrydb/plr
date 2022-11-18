@@ -130,7 +130,7 @@ else
 	exit 1
 fi
 ./tools/rsync-recommended
-./configure --prefix=/usr/lib64/R --with-x=no --with-readline=no --enable-R-shlib --disable-rpath
+MAIN_CFLAGS='-fcommon ' SHLIB_CFLAGS='-fcommon ' ./configure --prefix=/usr/lib64/R --with-x=no --with-readline=no --enable-R-shlib --disable-rpath
 make -j$(nproc)
 make install
 popd

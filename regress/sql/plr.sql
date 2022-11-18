@@ -281,7 +281,7 @@ select r_max(null,null) is null as "NULL";
 -- test tuple arguments
 --
 create or replace function get_foo(int) returns foo as 'select * from foo where f0 = $1' language 'sql';
-create or replace function test_foo(foo) returns foo as 'return(arg1)' language 'plr';
+create or replace function test_foo(foo) returns setof foo as 'return(arg1)' language 'plr';
 select * from test_foo(get_foo(1));
 
 --
@@ -299,7 +299,7 @@ if (arg2 < 1 || arg3 < 1 || arg4 < 1)
 if (arg2 > dim(arg1)[1] || arg3 > dim(arg1)[2] || arg4 > dim(arg1)[3])
   return(NA)
 return(arg1[arg2,arg3,arg4])
-' language 'plr' WITH (isstrict);
+' language 'plr' STRICT;
 
 select arr3d('{{{111,112},{121,122},{131,132}},{{211,212},{221,222},{231,232}}}',2,3,1) as "231";
 -- for sake of comparison, see what normal pgsql array operations produces
@@ -314,7 +314,7 @@ select f1[0][1][1] is null as "NULL" from (select '{{{111,112},{121,122},{131,13
 --
 -- test 3D array return value
 --
-create or replace function arr3d(_int4) returns int4[] as 'return(arg1)' language 'plr' WITH (isstrict);
+create or replace function arr3d(_int4) returns int4[] as 'return(arg1)' language 'plr' STRICT;
 select arr3d('{{{111,112},{121,122},{131,132}},{{211,212},{221,222},{231,232}}}');
 
 
@@ -359,16 +359,9 @@ SELECT count(routfloat4(15000));
 create or replace function test_return_numeric() returns numeric[] as 'array(1:10,c(2,5))' language 'plr';
 SELECT test_return_numeric();
 
---now cleaning 
+--now cleaning
 -- start_ignore
-DROP FUNCTION plr_call_handler() cascade; 
-DROP TYPE IF EXISTS plr_environ_type cascade; 
-DROP TYPE IF EXISTS r_typename cascade; 
-DROP TYPE IF EXISTS r_version_type CASCADE; 
-DROP TABLE IF EXISTS plr_modules CASCADE; 
-DROP TYPE IF EXISTS dtup CASCADE; 
-DROP TYPE IF EXISTS mtup CASCADE; 
-DROP TYPE IF EXISTS vtup CASCADE; 
+DROP TABLE IF EXISTS plr_modules;
+DROP TABLE IF EXISTS module_test;
 DROP TABLE IF EXISTS foo CASCADE;
-DROP TABLE IF EXISTS module_test CASCADE;
 -- end_ignore

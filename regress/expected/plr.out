@@ -403,7 +403,7 @@ select test_dta2();
 -- generates expected error
 create or replace function test_dia1() returns int[] as 'as.data.frame(array(letters[1:10], c(2,5)))' language 'plr';
 select test_dia1() as error;
-ERROR:  invalid input syntax for integer: "a"
+ERROR:  invalid input syntax for type integer: "a"
 CONTEXT:  In PL/R function test_dia1
 create or replace function test_dtup() returns setof record as 'data.frame(letters[1:10],1:10)' language 'plr';
 select * from test_dtup() as t(f1 text, f2 int);
@@ -646,7 +646,7 @@ select r_max(null,null) is null as "NULL";
 -- test tuple arguments
 --
 create or replace function get_foo(int) returns foo as 'select * from foo where f0 = $1' language 'sql';
-create or replace function test_foo(foo) returns foo as 'return(arg1)' language 'plr';
+create or replace function test_foo(foo) returns setof foo as 'return(arg1)' language 'plr';
 select * from test_foo(get_foo(1));
  f0 |  f1  |  f2  
 ----+------+------
@@ -673,7 +673,7 @@ if (arg2 < 1 || arg3 < 1 || arg4 < 1)
 if (arg2 > dim(arg1)[1] || arg3 > dim(arg1)[2] || arg4 > dim(arg1)[3])
   return(NA)
 return(arg1[arg2,arg3,arg4])
-' language 'plr' WITH (isstrict);
+' language 'plr' STRICT;
 select arr3d('{{{111,112},{121,122},{131,132}},{{211,212},{221,222},{231,232}}}',2,3,1) as "231";
  231 
 -----
@@ -715,7 +715,7 @@ select f1[0][1][1] is null as "NULL" from (select '{{{111,112},{121,122},{131,13
 --
 -- test 3D array return value
 --
-create or replace function arr3d(_int4) returns int4[] as 'return(arg1)' language 'plr' WITH (isstrict);
+create or replace function arr3d(_int4) returns int4[] as 'return(arg1)' language 'plr' STRICT;
 select arr3d('{{{111,112},{121,122},{131,132}},{{211,212},{221,222},{231,232}}}');
                                arr3d                               
 -------------------------------------------------------------------
@@ -817,90 +817,12 @@ SELECT test_return_numeric();
  {{1,3,5,7,9},{2,4,6,8,10}}
 (1 row)
 
---now cleaning 
+--now cleaning
 -- start_ignore
-DROP FUNCTION plr_call_handler() cascade; 
-NOTICE:  drop cascades to 69 other objects
-DETAIL:  drop cascades to language plr
-drop cascades to extension plr
-drop cascades to function rint2(smallint)
-drop cascades to function rint4(integer)
-drop cascades to function rint8(bigint)
-drop cascades to function rbool(boolean)
-drop cascades to function rfloat4(real)
-drop cascades to function rfloat8(double precision)
-drop cascades to function pg_test_install(text)
-drop cascades to function pg_test_module_load(text)
-drop cascades to function throw_notice(text)
-drop cascades to function paste(text[],text[],text)
-drop cascades to function vec(double precision[])
-drop cascades to function vec(double precision,double precision)
-drop cascades to function echo(text)
-drop cascades to function reval(text)
-drop cascades to function "commandArgs"()
-drop cascades to function vec(double precision)
-drop cascades to function reval(text[])
-drop cascades to function print(text)
-drop cascades to function rcube(integer)
-drop cascades to function sd(double precision[])
-drop cascades to function mean(double precision[])
-drop cascades to function sprintf(text,text,text)
-drop cascades to function r_median(double precision[])
-drop cascades to function "median"(double precision)
-drop cascades to function test_vt()
-drop cascades to function test_vi()
-drop cascades to function test_mt()
-drop cascades to function test_mi()
-drop cascades to function test_dt()
-drop cascades to function test_di()
-drop cascades to function test_vta()
-drop cascades to function test_via()
-drop cascades to function test_mta()
-drop cascades to function test_mia()
-drop cascades to function test_dia()
-drop cascades to function test_dta()
-drop cascades to function test_dta1()
-drop cascades to function test_dta2()
-drop cascades to function test_dia1()
-drop cascades to function test_dtup()
-drop cascades to function test_mtup()
-drop cascades to function test_vtup()
-drop cascades to function test_vint()
-drop cascades to function test_dtup1()
-drop cascades to function test_dtup2()
-drop cascades to function test_mtup1()
-drop cascades to function test_vtup1()
-drop cascades to function pg_quote_ident(text)
-drop cascades to function pg_quote_literal(text)
-drop cascades to function test_spi_t(text)
-drop cascades to function test_spi_ta(text)
-drop cascades to function test_spi_tup(text)
-drop cascades to function fetch_pgoid(text)
-drop cascades to function test_spi_prep(text)
-drop cascades to function test_spi_execp(text,text,text)
-drop cascades to function r_test(double precision)
-drop cascades to function r_max(integer,integer)
-drop cascades to function test_foo(foo)
-drop cascades to function test_in_m_tup(integer[])
-drop cascades to function arr3d(integer[],integer,integer,integer)
-drop cascades to function arr3d(integer[])
-drop cascades to function cursor_fetch_test(integer,boolean)
-drop cascades to function cursor_fetch_test_arg(integer)
-drop cascades to function test_serialize(text)
-drop cascades to function restore_df(bytea)
-drop cascades to function rlargeint8out(integer)
-drop cascades to function routfloat4(integer)
-DROP TYPE IF EXISTS plr_environ_type cascade; 
-NOTICE:  type "plr_environ_type" does not exist, skipping
-DROP TYPE IF EXISTS r_typename cascade; 
-NOTICE:  type "r_typename" does not exist, skipping
-DROP TYPE IF EXISTS r_version_type CASCADE; 
-NOTICE:  type "r_version_type" does not exist, skipping
-DROP TABLE IF EXISTS plr_modules CASCADE; 
-DROP TYPE IF EXISTS dtup CASCADE; 
-DROP TYPE IF EXISTS mtup CASCADE; 
-DROP TYPE IF EXISTS vtup CASCADE; 
+DROP TABLE IF EXISTS plr_modules;
+DROP TABLE IF EXISTS module_test;
 DROP TABLE IF EXISTS foo CASCADE;
-NOTICE:  drop cascades to function get_foo(integer)
-DROP TABLE IF EXISTS module_test CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function get_foo(integer)
+drop cascades to function test_foo(foo)
 -- end_ignore

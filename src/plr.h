@@ -55,6 +55,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
+#include "common/hashfn.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "nodes/makefuncs.h"
@@ -128,7 +129,7 @@ extern int R_SignalHandlers;
 #endif
 
 #define WARNING		19
-#define ERROR		20
+#define ERROR		21
 
 /* starting in R-2.7.0 this defn was removed from Rdevices.h */
 #ifndef KillAllDevices
@@ -365,7 +366,7 @@ extern void R_RunExitFinalizers(void);
 		int32		tupTypmod; \
 		TupleDesc	tupdesc; \
 		HeapTuple	tuple = palloc(sizeof(HeapTupleData)); \
-		HeapTupleHeader	tuple_hdr = DatumGetHeapTupleHeader(arg[i]); \
+		HeapTupleHeader	tuple_hdr = DatumGetHeapTupleHeader(args[i].value); \
 		tupType = HeapTupleHeaderGetTypeId(tuple_hdr); \
 		tupTypmod = HeapTupleHeaderGetTypMod(tuple_hdr); \
 		tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod); \
@@ -528,7 +529,6 @@ extern SEXP plr_SPI_cursor_open(SEXP cursor_name_arg,SEXP rsaved_plan, SEXP rarg
 extern SEXP plr_SPI_cursor_fetch(SEXP cursor_in,SEXP forward_in, SEXP rows_in);
 extern void plr_SPI_cursor_close(SEXP cursor_in);
 extern void plr_SPI_cursor_move(SEXP cursor_in, SEXP forward_in, SEXP rows_in);
-extern SEXP plr_SPI_lastoid(void);
 extern void throw_r_error(const char **msg);
 
 /* Postgres callable functions useful in conjunction with PL/R */

@@ -598,21 +598,6 @@ plr_SPI_execp(SEXP rsaved_plan, SEXP rargvalues)
 }
 
 /*
- * plr_SPI_lastoid - return the last oid. To be used after insert queries.
- */
-SEXP
-plr_SPI_lastoid(void)
-{
-	SEXP	result;
-
-	PROTECT(result = NEW_INTEGER(1));
-	INTEGER_DATA(result)[0] = SPI_lastoid;
-	UNPROTECT(1);
-
-	return result;
-}
-
-/*
  * Takes the prepared plan rsaved_plan and creates a cursor 
  * for it using the values specified in ragvalues.
  *

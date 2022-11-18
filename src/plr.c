@@ -102,9 +102,6 @@ int R_SignalHandlers = 1;  /* Exposed in R_interface.h */
 #define SPI_CURSOR_CLOSE_CMD \
 			"pg.spi.cursor_close<-function(cursor) " \
 			"{.Call(\"plr_SPI_cursor_close\",cursor)}"
-#define SPI_LASTOID_CMD \
-			"pg.spi.lastoid <-function() " \
-			"{.Call(\"plr_SPI_lastoid\")}"
 #define SPI_DBDRIVER_CMD \
 			"dbDriver <-function(db_name)\n" \
 			"{return(NA)}"
@@ -181,7 +178,7 @@ static plr_function *do_compile(FunctionCallInfo fcinfo,
 								plr_func_hashkey *hashkey);
 static void plr_protected_parse(void* data);
 static SEXP plr_parse_func_body(const char *body);
-static SEXP plr_convertargs(plr_function *function, Datum *arg, bool *argnull, FunctionCallInfo fcinfo);
+static SEXP plr_convertargs(plr_function *function, NullableDatum *args, FunctionCallInfo fcinfo);
 static void plr_error_callback(void *arg);
 static Oid getNamespaceOidFromFunctionOid(Oid fnOid);
 static bool haveModulesTable(Oid nspOid);
@@ -448,7 +445,6 @@ plr_load_builtins(Oid funcid)
 		SPI_CURSOR_FETCH_CMD,
 		SPI_CURSOR_MOVE_CMD,
 		SPI_CURSOR_CLOSE_CMD,
-		SPI_LASTOID_CMD,
 		SPI_DBDRIVER_CMD,
 		SPI_DBCONN_CMD,
 		SPI_DBSENDQUERY_CMD,
@@ -728,7 +724,7 @@ plr_trigger_handler(PG_FUNCTION_ARGS)
 	PROTECT(fun = function->fun);
 
 	/* Convert all call arguments */
-	PROTECT(rargs = plr_convertargs(function, arg, argnull, fcinfo));
+	PROTECT(rargs = plr_convertargs(function, fcinfo->args, fcinfo));
 
 	/* Call the R function */
 	PROTECT(rvalue = call_r_func(fun, rargs));
@@ -766,7 +762,7 @@ plr_func_handler(PG_FUNCTION_ARGS)
 	PROTECT(fun = function->fun);
 
 	/* Convert all call arguments */
-	PROTECT(rargs = plr_convertargs(function, fcinfo->arg, fcinfo->argnull, fcinfo));
+	PROTECT(rargs = plr_convertargs(function, fcinfo->args, fcinfo));
 
 	/* Call the R function */
 	PROTECT(rvalue = call_r_func(fun, rargs));
@@ -966,7 +962,7 @@ do_compile(FunctionCallInfo fcinfo,
 
 #ifdef HAVE_WINDOW_FUNCTIONS
 	/* Flag for window functions */
-	function->iswindow = procStruct->proiswindow;
+	function->iswindow = procStruct->prokind == 'w';
 #endif
 
 	/* Lookup the pg_language tuple by Oid*/
@@ -1084,7 +1080,7 @@ do_compile(FunctionCallInfo fcinfo,
 	
 			for (i = 0; i < function->result_natts; i++)
 			{
-				function->result_fld_elem_typid[i] = get_element_type(tupdesc->attrs[i]->atttypid);
+				function->result_fld_elem_typid[i] = get_element_type(tupdesc->attrs[i].atttypid);
 				if (OidIsValid(function->result_fld_elem_typid[i]))
 				{
 					get_type_io_data(function->result_fld_elem_typid[i], IOFunc_input,
@@ -1506,7 +1502,7 @@ call_r_func(SEXP fun, SEXP rargs)
 }
 
 static SEXP
-plr_convertargs(plr_function *function, Datum *arg, bool *argnull, FunctionCallInfo fcinfo)
+plr_convertargs(plr_function *function, NullableDatum *args, FunctionCallInfo fcinfo)
 {
 	int		i;
 	int		m = 1;
@@ -1542,7 +1538,7 @@ plr_convertargs(plr_function *function, Datum *arg, bool *argnull, FunctionCallI
 		if (!function->iswindow)
 		{
 #endif
-			if (argnull[i])
+			if (args[i].isnull)
 			{
 				/* fast track for null arguments */
 				PROTECT(el = R_NilValue);
@@ -1555,7 +1551,7 @@ plr_convertargs(plr_function *function, Datum *arg, bool *argnull, FunctionCallI
 			else if (function->arg_elem[i] == InvalidOid)
 			{
 				/* for scalar args, convert to a one row vector */
-				Datum		dvalue = arg[i];
+				Datum		dvalue = args[i].value;
 				Oid			arg_typid = function->arg_typid[i];
 				FmgrInfo	arg_out_func = function->arg_out_func[i];
 
@@ -1564,7 +1560,7 @@ plr_convertargs(plr_function *function, Datum *arg, bool *argnull, FunctionCallI
 			else
 			{
 				/* better be a pg array arg, convert to a multi-row vector */
-				Datum		dvalue = (Datum) PG_DETOAST_DATUM(arg[i]);
+				Datum		dvalue = (Datum) PG_DETOAST_DATUM(args[i].value);
 				FmgrInfo	out_func = function->arg_elem_out_func[i];
 				int			typlen = function->arg_elem_typlen[i];
 				bool		typbyval = function->arg_elem_typbyval[i];

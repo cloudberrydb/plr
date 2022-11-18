@@ -10,6 +10,7 @@ source "${GPDB_CONCOURSE_DIR}/common.bash"
 function prepare_test(){
 
     cat > /home/gpadmin/test.sh <<-EOF
+        #!/usr/bin/env bash
         set -exo pipefail
 
         source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
@@ -20,9 +21,12 @@ function prepare_test(){
 
         pushd plr_src/src
 
-        make USE_PGXS=1 installcheck
-
+        PGOPTIONS='-c optimizer=off' make USE_PGXS=1 installcheck
         [ -s regression.diffs ] && cat regression.diffs && exit 1
+
+        # PGOPTIONS='-c optimizer=on' make USE_PGXS=1 installcheck
+        # [ -s regression.diffs ] && cat regression.diffs && exit 1
+
         popd
 EOF
 
@@ -38,18 +42,7 @@ function test() {
 }
 
 function setup_gpadmin_user() {
-    case "$OSVER" in
-        suse*)
-        ${GPDB_CONCOURSE_DIR}/setup_gpadmin_user.bash "sles"
-        ;;
-        centos* | rhel*)
-        ${GPDB_CONCOURSE_DIR}/setup_gpadmin_user.bash "centos"
-        ;;
-        ubuntu*)
-        ${GPDB_CONCOURSE_DIR}/setup_gpadmin_user.bash "ubuntu"
-        ;;
-        *) echo "Unknown OS: $OSVER"; exit 1 ;;
-    esac
+    ${GPDB_CONCOURSE_DIR}/setup_gpadmin_user.bash
 }
 
 function install_pkg()
@@ -69,11 +62,19 @@ ubuntu*)
 esac
 }
 
+function make_cluster() {
+    #source /usr/local/greenplum-db-devel/greenplum_path.sh
+    export BLDWRAP_POSTGRES_CONF_ADDONS=${BLDWRAP_POSTGRES_CONF_ADDONS}
+    export STATEMENT_MEM=250MB
+    pushd gpdb_src/gpAux/gpdemo
+    su gpadmin -c "source /usr/local/greenplum-db-devel/greenplum_path.sh; LANG=en_US.utf8 make create-demo-cluster"
+    popd
+}
+
 function _main() {
     time install_pkg
     time install_gpdb
     time setup_gpadmin_user
-
     time make_cluster
     time prepare_test
     time test
