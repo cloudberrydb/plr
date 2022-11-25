@@ -5,7 +5,7 @@ Version: #gppkgver
 GPDBVersion: #gpver
 Description: Provides a procedural language implementation of R for the Greenplum Database. 
 PostInstall:
-- Master: "echo '-';
+- Coordinator: "echo '-';
           echo '==========================================================================';
           echo 'PL/R installation is complete! To proceed, create PL/R language in the ';
           echo 'target database with: ';

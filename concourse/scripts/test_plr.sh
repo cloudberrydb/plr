@@ -7,6 +7,7 @@ TOP_DIR=${CWDIR}/../../../
 GPDB_CONCOURSE_DIR=${TOP_DIR}/gpdb_src/concourse/scripts
 
 source "${GPDB_CONCOURSE_DIR}/common.bash"
+INSTALL_DIR=${INSTALL_DIR:-/usr/local/cloudberry-db-devel}
 function prepare_test(){
 
     cat > /home/gpadmin/test.sh <<-EOF
@@ -14,9 +15,9 @@ function prepare_test(){
         set -exo pipefail
 
         source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
-        source /usr/local/greenplum-db-devel/greenplum_path.sh
+        source $INSTALL_DIR/greenplum_path.sh
         gppkg -i bin_plr/plr-*.gppkg || exit 1
-        source /usr/local/greenplum-db-devel/greenplum_path.sh
+        source $INSTALL_DIR/greenplum_path.sh
         gpstop -arf
 
         pushd plr_src/src
@@ -63,11 +64,11 @@ esac
 }
 
 function make_cluster() {
-    #source /usr/local/greenplum-db-devel/greenplum_path.sh
+    #source $INSTALL_DIR/greenplum_path.sh
     export BLDWRAP_POSTGRES_CONF_ADDONS=${BLDWRAP_POSTGRES_CONF_ADDONS}
     export STATEMENT_MEM=250MB
     pushd gpdb_src/gpAux/gpdemo
-    su gpadmin -c "source /usr/local/greenplum-db-devel/greenplum_path.sh; LANG=en_US.utf8 make create-demo-cluster"
+    su gpadmin -c "source $INSTALL_DIR/greenplum_path.sh; LANG=en_US.utf8 make create-demo-cluster"
     popd
 }
 

@@ -130,7 +130,8 @@ else
 	exit 1
 fi
 ./tools/rsync-recommended
-MAIN_CFLAGS='-fcommon ' SHLIB_CFLAGS='-fcommon ' ./configure --prefix=/usr/lib64/R --with-x=no --with-readline=no --enable-R-shlib --disable-rpath
+MAIN_CFLAGS='-fcommon ' SHLIB_CFLAGS='-fcommon ' \
+    ./configure --prefix=/usr/lib64/R --libdir=/usr/lib64/R/lib64 --with-x=no --with-readline=no --enable-R-shlib --disable-rpath
 make -j$(nproc)
 make install
 popd
@@ -138,22 +139,17 @@ popd
 # Magic to make it work from any directory it is installed into
 # given the fact R_HOME is set
 
-if [ "$OSVER" == "ubuntu18" ]; then
-    sed -i 's|/usr/lib64/R/lib/R|${R_HOME}|g' /usr/lib64/R/bin/R
-    sed -i 's|/usr/lib64/R/lib/R|${R_HOME}|g' /usr/lib64/R/lib/R/bin/R
-else
-    sed -i 's|/usr/lib64/R/lib64/R|${R_HOME}|g' /usr/lib64/R/bin/R
-    sed -i 's|/usr/lib64/R/lib64/R|${R_HOME}|g' /usr/lib64/R/lib64/R/bin/R
-fi
+sed -i 's|/usr/lib64/R/lib64/R|${R_HOME}|g' /usr/lib64/R/bin/R
+sed -i 's|/usr/lib64/R/lib64/R|${R_HOME}|g' /usr/lib64/R/lib64/R/bin/R
 
-mkdir /usr/lib64/R/lib64/R/extlib
-cp /usr/local/lib64/zlib/lib/libz.so*      /usr/lib64/R/lib64/R/extlib
-cp /usr/local/lib64/xz/lib/liblzma.so*     /usr/lib64/R/lib64/R/extlib
-cp /usr/local/lib64/pcre/lib/libpcre.so*   /usr/lib64/R/lib64/R/extlib
+mkdir -p /usr/lib64/R/lib64/R/extlib
+cp -P /usr/local/lib64/zlib/lib/libz.so*      /usr/lib64/R/lib64/R/extlib
+cp -P /usr/local/lib64/bzip2/lib/libbz2.so*   /usr/lib64/R/lib64/R/extlib
+cp -P /usr/local/lib64/xz/lib/liblzma.so*     /usr/lib64/R/lib64/R/extlib
+cp -P /usr/local/lib64/pcre/lib/libpcre.so*   /usr/lib64/R/lib64/R/extlib
 
 case $OSVER in
     centos6)
-        cp /usr/local/lib64/bzip2/lib/libbz2.so.1.0 /usr/lib64/R/lib64/R/extlib
 #        cp /usr/local/curl/lib/libcurl.so.4         /usr/lib64/R/lib64/R/extlib
         cp /usr/lib64/libgomp.so.1                  /usr/lib64/R/lib64/R/extlib
         cp /usr/lib64/libgfortran.so.3              /usr/lib64/R/lib64/R/extlib
@@ -161,16 +157,12 @@ case $OSVER in
 #        cp /usr/lib64/libcrypto.so.10               /usr/lib64/R/lib64/R/extlib
     ;;
     centos7)
-        cp /usr/local/lib64/bzip2/lib/libbz2.so.1.0 /usr/lib64/R/lib64/R/extlib
-#        cp /usr/local/curl/lib/libcurl.so.4         /usr/lib64/R/lib64/R/extlib
-        cp /usr/lib64/libgomp.so.1                  /usr/lib64/R/lib64/R/extlib
-        cp /usr/lib64/libgfortran.so.3              /usr/lib64/R/lib64/R/extlib
-#        cp /usr/lib64/libssl.so.10                  /usr/lib64/R/lib64/R/extlib
-#        cp /usr/lib64/libcrypto.so.10               /usr/lib64/R/lib64/R/extlib
-        cp /usr/lib64/libquadmath.so.0              /usr/lib64/R/lib64/R/extlib
+        cp -P /usr/lib64/libgomp.so*                  /usr/lib64/R/lib64/R/extlib
+        cp -P /usr/lib64/libgfortran.so*              /usr/lib64/R/lib64/R/extlib
+        # FIXME: Why is libquadmath.so needed? This library does not exist on centos7-aarch64
+        #cp -P /usr/lib64/libquadmath.so*              /usr/lib64/R/lib64/R/extlib
     ;;
     rhel8)
-        cp /usr/local/lib64/bzip2/lib/libbz2.so* /usr/lib64/R/lib64/R/extlib # libbz2.so.1.0.6
 #        cp /usr/local/curl/lib/libcurl.so.4         /usr/lib64/R/lib64/R/extlib
         cp /usr/lib64/libgomp.so*                  /usr/lib64/R/lib64/R/extlib # libgomp.so.1.0.0
         cp /usr/lib64/libgfortran.so*              /usr/lib64/R/lib64/R/extlib # libgfortran.so.5.0.0
@@ -179,7 +171,6 @@ case $OSVER in
         cp /usr/lib64/libquadmath.so*              /usr/lib64/R/lib64/R/extlib # libquadmath.0.0.0
     ;;
     suse*)
-        cp /usr/local/lib64/bzip2/lib/libbz2.so.1   /usr/lib64/R/lib64/R/extlib
  #       cp /usr/local/lib64/curl/lib/libcurl.so.4   /usr/lib64/R/lib64/R/extlib
         cp /usr/lib64/libgomp.so.1        /usr/lib64/R/lib64/R/extlib
         cp /usr/lib64/libgfortran.so.3    /usr/lib64/R/lib64/R/extlib
