@@ -24,6 +24,9 @@ OSNAME=$(shell echo $(OS) | sed -n "s/[0-9]\+//p")
 ifeq ($(OSNAME), rhel)
 include gppkg_rpm.mk
 endif
+ifeq ($(OSNAME), kylin)
+include gppkg_rpm.mk
+endif
 ifeq ($(OSNAME), ubuntu)
 include gppkg_deb.mk
 endif

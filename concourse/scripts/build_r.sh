@@ -118,7 +118,8 @@ fi
 
 export LIBRARY_PATH=$LD_LIBRARY_PATH
 
-wget --no-check-certificate https://cran.r-project.org/src/base/R-3/R-3.3.3.tar.gz
+#wget --no-check-certificate https://cran.r-project.org/src/base/R-3/R-3.3.3.tar.gz
+wget https://artifactory.hashdata.xyz/artifactory/greenplum/cbdb-build-dependencies/R-3.3.3.tar.gz
 tar -zxf R-3.3.3.tar.gz
 pushd R-3.3.3
 source ${TOP_DIR}/plr_src/gppkg/release.mk
@@ -156,7 +157,7 @@ case $OSVER in
 #        cp /usr/lib64/libssl.so.10                  /usr/lib64/R/lib64/R/extlib
 #        cp /usr/lib64/libcrypto.so.10               /usr/lib64/R/lib64/R/extlib
     ;;
-    centos7)
+    centos7 | kylin10)
         cp -P /usr/lib64/libgomp.so*                  /usr/lib64/R/lib64/R/extlib
         cp -P /usr/lib64/libgfortran.so*              /usr/lib64/R/lib64/R/extlib
         # FIXME: Why is libquadmath.so needed? This library does not exist on centos7-aarch64

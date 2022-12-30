@@ -49,7 +49,7 @@ function setup_gpadmin_user() {
 function install_pkg()
 {
 case $OSVER in
-centos* | rhel*)
+centos* | rhel* | kylin*)
     yum install -y pkgconfig
     ;;
 ubuntu*)

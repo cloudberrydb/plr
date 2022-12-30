@@ -12,7 +12,7 @@ source "${TOP_DIR}/gpdb_src/concourse/scripts/common.bash"
 INSTALL_DIR=${INSTALL_DIR:-/usr/local/cloudberry-db-devel}
 function install_pkg() {
 case $OSVER in
-centos* | rhel*)
+centos* | rhel* | kylin*)
     yum install -y pkgconfig
     tar zxf bin_r/bin_r_$OSVER.tar.gz -C /usr/lib64
     export LD_LIBRARY_PATH=/usr/lib64/R/lib64/R/lib:/usr/lib64/R/lib64/R/extlib:$LD_LIBRARY_PATH
